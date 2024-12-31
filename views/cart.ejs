@@ -1,0 +1,146 @@
+<%- include('./partials/header') %>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.js"></script>
+
+<div class="swiper-container">
+  <div class="swiper-wrapper">
+    <% let totalBill = 0; %> <!-- Initialize totalBill -->
+    <% user.cart.forEach(function(item, index) { %>
+      <% 
+        let productBill = Number(item.price) + 20 - Number(item.discount); 
+        totalBill += productBill; // Add productBill to totalBill
+      %>
+      <div class="swiper-slide flex flex-col items-center px-5 py-10 gap-1 justify-center">
+        <div class="w-[45%] rounded-md overflow-hidden mx-auto">
+          <div class="w-full flex justify-center items-center h-80 bg-[<%= item.bgcolor %>]">
+            <img class="h-[18rem]" src="data:image/jpeg;base64,<%= item.image.toString('base64') %>" alt="">
+          </div>
+          <div class="w-full flex justify-between px-5 py-4 bg-[<%= item.panelcolor %>]">
+            <h3 class="text-2xl"><%= item.name %></h3>
+            <div class="flex items-center gap-2">
+              <!-- Quantity Adjustment Buttons -->
+              <i 
+                class="w-7 h-7 bg-white flex rounded-full items-center justify-center ri-add-line cursor-pointer increment-btn" 
+                data-index="<%= index %>">
+              </i>
+              <div 
+                class="px-2 py-1 rounded-md bg-white text-black quantity-display" 
+                data-index="<%= index %>">
+                1
+              </div>
+              <i 
+                class="w-7 h-7 bg-white flex rounded-full items-center justify-center ri-subtract-line cursor-pointer decrement-btn" 
+                data-index="<%= index %>">
+              </i>
+            </div>
+          </div>
+          <div class="flex items-center justify-between px-5 text-white py-3 bg-[<%= item.textcolor %>]">
+            <h4 class="text-lg">Net Total</h4>
+            <h2 class="text-lg net-total" data-index="<%= index %>">₹ <%= productBill %></h2>
+          </div>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+  <!-- Add navigation buttons -->
+  <div class="swiper-button-next"></div>
+  <div class="swiper-button-prev"></div>
+  <div class="swiper-pagination"></div>
+</div>
+
+<!-- Fixed footer for total bill and place order -->
+<div class="fixed bottom-0 left-0 w-full bg-gray-900 text-white flex justify-between items-center px-10 py-5">
+  <h3 class="text-xl font-bold total-bill">Total Bill: ₹ <%= totalBill %></h3>
+  <button class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-md text-lg font-semibold">
+    Place Order
+  </button>
+</div>
+
+<script>
+    // Initialize Swiper
+    const swiper = new Swiper('.swiper-container', {
+      slidesPerView: 2, 
+      spaceBetween: 10, 
+      loop: true,
+      navigation: {
+        nextEl: '.swiper-button-next',
+        prevEl: '.swiper-button-prev',
+      },
+      breakpoints: {
+        768: {
+          slidesPerView: 1, 
+        },
+        1024: {
+          slidesPerView: 2, 
+        },
+      },
+    });
+  
+    // JavaScript for Quantity Adjustment
+    const incrementButtons = document.querySelectorAll('.increment-btn');
+    const decrementButtons = document.querySelectorAll('.decrement-btn');
+    const quantityDisplays = document.querySelectorAll('.quantity-display');
+    const netTotals = document.querySelectorAll('.net-total');
+    const totalBillDisplay = document.querySelector('.total-bill');
+  
+    let totalBill = <%= totalBill %>; // Initialize totalBill
+    const userCart = <%- JSON.stringify(user.cart) %>; // Access user cart data
+  
+    incrementButtons.forEach((button) => {
+      button.addEventListener('click', (e) => {
+        const index = e.target.getAttribute('data-index');
+        const quantityDisplay = quantityDisplays[index];
+        const netTotal = netTotals[index];
+        const item = userCart[index];
+  
+        let quantity = parseInt(quantityDisplay.textContent, 10);
+        quantity++;
+        quantityDisplay.textContent = quantity;
+  
+        const productBill = (Number(item.price) + 20 - Number(item.discount)) * quantity;
+        netTotal.textContent = `₹ ${productBill}`;
+  
+        totalBill += Number(item.price) + 20 - Number(item.discount);
+        totalBillDisplay.textContent = `Total Bill: ₹ ${totalBill}`;
+      });
+    });
+  
+    decrementButtons.forEach((button) => {
+      button.addEventListener('click', (e) => {
+        const index = e.target.getAttribute('data-index'); // Get product index
+        const quantityDisplay = quantityDisplays[index];
+        const netTotal = netTotals[index];
+        const item = userCart[index];
+  
+        let quantity = parseInt(quantityDisplay.textContent, 10);
+  
+        if (quantity > 1) {
+          // Decrease quantity and update display
+          quantity--;
+          quantityDisplay.textContent = quantity;
+  
+          // Update Net Total for the product
+          const productBill = (Number(item.price) + 20 - Number(item.discount)) * quantity;
+          netTotal.textContent = `₹ ${productBill}`;
+  
+          // Adjust the total bill
+          totalBill -= Number(item.price) + 20 - Number(item.discount);
+          totalBillDisplay.textContent = `Total Bill: ₹ ${totalBill}`;
+        } else {
+          // Remove the product from the DOM when quantity becomes 0
+          const productElement = e.target.closest('.swiper-slide'); // Get product container
+          productElement.remove(); // Remove product from DOM
+  
+          // Adjust the total bill
+          totalBill -= Number(item.price) + 20 - Number(item.discount);
+          totalBillDisplay.textContent = `Total Bill: ₹ ${totalBill}`;
+  
+          // Remove the product from the cart array
+          userCart.splice(index, 1); // Update cart
+        }
+      });
+    });
+  </script>
+
+<%- include('./partials/footer') %>

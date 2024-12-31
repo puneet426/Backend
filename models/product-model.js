@@ -9,7 +9,7 @@ const productSchema = mongoose.Schema({
         default:0
     },
     price:Number,
-    image:String,
+    image:Buffer,
     bgcolor:String,
     panelcolor:String,
     textcolor:String,
